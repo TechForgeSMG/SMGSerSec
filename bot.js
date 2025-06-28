@@ -6,7 +6,7 @@ const USERNAME = "SMGSecurity";
 const VERSION = "1.21.4"; // or "auto"
 const PASSWORD = "Securitybysmg007";
 
-function createBot() {
+function startBot() {
   console.log("⏳ Creating bot…");
 
   const bot = mineflayer.createBot({
@@ -25,14 +25,13 @@ function createBot() {
   });
 
   bot.on("end", () => {
-    console.log("🔁 [end] disconnected — retrying in 5s");
-    setTimeout(createBot, 5000);
+    console.log("🔁 [end] disconnected — retrying in 10s");
+    setTimeout(startBot, 10000);
   });
 
   bot.once("login", () => {
     console.log("✅ [login] successful — in game world.");
 
-    // Wait a moment before sending /vanish
     setTimeout(() => {
       console.log("🫥 Sending /vanish command");
       bot.chat("/vanish");
@@ -47,6 +46,18 @@ function createBot() {
       bot.setControlState("jump", true);
       setTimeout(() => bot.setControlState("jump", false), 500);
     }, 30000);
+
+    // Random movement and looking every 10 seconds
+    setInterval(() => {
+      const yaw = Math.random() * Math.PI * 2;
+      const pitch = (Math.random() - 0.5) * Math.PI;
+      bot.look(yaw, pitch, true);
+
+      const movements = ['forward', 'back', 'left', 'right'];
+      const move = movements[Math.floor(Math.random() * movements.length)];
+      bot.setControlState(move, true);
+      setTimeout(() => bot.setControlState(move, false), 1000);
+    }, 10000);
   });
 
   // Login/Register automation
@@ -60,32 +71,7 @@ function createBot() {
       bot.chat(`/login ${PASSWORD}`);
     }
   });
-bot.on('spawn', () => {
-    console.log("Bot spawned, starting anti-AFK.");
-
-    setInterval(() => {
-      const yaw = Math.random() * Math.PI * 2;
-      const pitch = (Math.random() - 0.5) * Math.PI;
-      bot.look(yaw, pitch, true);
-
-      const movements = ['forward', 'back', 'left', 'right'];
-      const move = movements[Math.floor(Math.random() * movements.length)];
-      bot.setControlState(move, true);
-
-      setTimeout(() => {
-        bot.setControlState(move, false);
-      }, 1000); // Move for 1 second
-    }, 10000); // Every 10 seconds
-  });
-
-  bot.on('end', () => {
-    console.log("Bot disconnected. Reconnecting in 10 seconds...");
-    setTimeout(startBot, 10000);
-  });
-
-  bot.on('error', err => {
-    console.error("Bot error:", err);
-  });
 }
 
+// Start the bot
 startBot();
