@@ -3,7 +3,7 @@ const mineflayer = require("mineflayer");
 const HOST = "play.smgin.me";
 const PORT = 58073;
 const USERNAME = "SMGSecurity";
-const VERSION = "1.21.4"; // or "auto"
+const VERSION = "1.21.4";
 const PASSWORD = "Securitybysmg007";
 
 function startBot() {
@@ -35,26 +35,52 @@ function startBot() {
     bot.on("spawn", () => {
       console.log("✅ [spawn] bot is alive in the world");
 
-      // Anti-AFK: jump every 30 seconds
-      setInterval(() => {
-        bot.setControlState("jump", true);
-        setTimeout(() => bot.setControlState("jump", false), 500);
-      }, 30000);
+      const movements = ['forward', 'back', 'left', 'right'];
+      let currentMove = null;
 
-      // Random movement and looking every 10 seconds
+      // Change movement every 5-8 seconds
+      setInterval(() => {
+        if (currentMove) bot.setControlState(currentMove, false);
+        currentMove = movements[Math.floor(Math.random() * movements.length)];
+        bot.setControlState(currentMove, true);
+      }, 5000 + Math.random() * 3000);
+
+      // Look randomly every 3 seconds
       setInterval(() => {
         const yaw = Math.random() * Math.PI * 2;
         const pitch = (Math.random() - 0.5) * Math.PI;
         bot.look(yaw, pitch, true);
+      }, 3000);
 
-        const movements = ['forward', 'back', 'left', 'right'];
-        const move = movements[Math.floor(Math.random() * movements.length)];
-        bot.setControlState(move, true);
-        setTimeout(() => bot.setControlState(move, false), 1000);
-      }, 10000);
+      // Jump every 15–25 seconds
+      setInterval(() => {
+        bot.setControlState("jump", true);
+        setTimeout(() => bot.setControlState("jump", false), 500);
+      }, 15000 + Math.random() * 10000);
+
+      // Swing arm every 7–12 seconds
+      setInterval(() => {
+        bot.swingArm();
+      }, 7000 + Math.random() * 5000);
+
+      // Toggle sneak and sprint randomly
+      setInterval(() => {
+        bot.setControlState("sprint", true);
+        bot.setControlState("sneak", true);
+        setTimeout(() => {
+          bot.setControlState("sprint", false);
+          bot.setControlState("sneak", false);
+        }, 1000 + Math.random() * 2000);
+      }, 10000 + Math.random() * 10000);
+
+      // Hotbar slot switching every 20–30 seconds (optional)
+      setInterval(() => {
+        const slot = Math.floor(Math.random() * 9);
+        bot.setQuickBarSlot(slot);
+      }, 20000 + Math.random() * 10000);
     });
 
-    // Login/Register automation
+    // Auto Login/Register
     bot.on("message", (msg) => {
       const text = msg.toString().toLowerCase();
       if (text.includes("register")) {
@@ -68,5 +94,4 @@ function startBot() {
   });
 }
 
-// Start the bot
 startBot();
