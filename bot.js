@@ -32,12 +32,6 @@ function startBot() {
   bot.once("login", () => {
     console.log("✅ [login] successful — in game world.");
 
-    setTimeout(() => {
-      console.log("🫥 Sending /vanish command");
-      bot.chat("/vanish");
-    }, 3000);
-  });
-
   bot.on("spawn", () => {
     console.log("✅ [spawn] bot is alive in the world");
 
