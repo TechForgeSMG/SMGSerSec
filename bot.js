@@ -1,13 +1,14 @@
 const mineflayer = require("mineflayer");
-const { pathfinder, Movements, goals } = require("mineflayer-pathfinder");
 
 const HOST = "play.smgin.me";
 const PORT = 58073;
 const USERNAME = "SMGSecurity";
+const VERSION = "1.21.4";
 const PASSWORD = "Securitybysmg007";
-const VERSION = "1.21.4"; // or "auto"
 
 function startBot() {
+  console.log("⏳ Creating bot…");
+
   const bot = mineflayer.createBot({
     host: HOST,
     port: PORT,
@@ -15,64 +16,78 @@ function startBot() {
     version: VERSION,
   });
 
-  bot.loadPlugin(pathfinder);
+  bot.on("error", (err) => {
+    console.error("❌ [error]", err);
+  });
 
-  bot.on("error", console.error);
-  bot.on("kicked", (reason) => console.warn("⚠️ Kicked:", reason.toString()));
+  bot.on("kicked", (reason) => {
+    console.warn("⚠️ [kicked]", reason.toString());
+  });
+
   bot.on("end", () => {
-    console.log("🔁 Disconnected. Reconnecting in 10s...");
+    console.log("🔁 [end] disconnected — retrying in 10s");
     setTimeout(startBot, 10000);
   });
 
   bot.once("login", () => {
-    console.log("✅ Logged in.");
+    console.log("✅ [login] successful — in game world.");
 
     bot.on("spawn", () => {
-      console.log("🚶 Bot spawned.");
+      console.log("✅ [spawn] bot is alive in the world");
 
-      const mcData = require("minecraft-data")(bot.version);
-      const defaultMove = new Movements(bot, mcData);
-      bot.pathfinder.setMovements(defaultMove);
+      const movements = ['forward', 'back', 'left', 'right'];
+      let currentMove = null;
 
-      // Walk to random nearby position every 15–25s
+      // Change movement every 5-8 seconds
       setInterval(() => {
-        const offsetX = Math.floor(Math.random() * 10 - 5);
-        const offsetZ = Math.floor(Math.random() * 10 - 5);
-        const pos = bot.entity.position.offset(offsetX, 0, offsetZ);
-        bot.pathfinder.setGoal(new goals.GoalBlock(pos.x, pos.y, pos.z));
-      }, 15000 + Math.random() * 10000);
+        if (currentMove) bot.setControlState(currentMove, false);
+        currentMove = movements[Math.floor(Math.random() * movements.length)];
+        bot.setControlState(currentMove, true);
+      }, 5000 + Math.random() * 3000);
 
-      // Look around every few seconds
+      // Look randomly every 3 seconds
       setInterval(() => {
         const yaw = Math.random() * Math.PI * 2;
         const pitch = (Math.random() - 0.5) * Math.PI;
         bot.look(yaw, pitch, true);
       }, 3000);
 
-      // Jump every 20–30s
+      // Jump every 15–25 seconds
       setInterval(() => {
         bot.setControlState("jump", true);
         setTimeout(() => bot.setControlState("jump", false), 500);
-      }, 20000 + Math.random() * 10000);
+      }, 15000 + Math.random() * 10000);
 
-      // Random hotbar switching
+      // Swing arm every 7–12 seconds
+      setInterval(() => {
+        bot.swingArm();
+      }, 7000 + Math.random() * 5000);
+
+      // Toggle sneak and sprint randomly
+      setInterval(() => {
+        bot.setControlState("sprint", true);
+        bot.setControlState("sneak", true);
+        setTimeout(() => {
+          bot.setControlState("sprint", false);
+          bot.setControlState("sneak", false);
+        }, 1000 + Math.random() * 2000);
+      }, 10000 + Math.random() * 10000);
+
+      // Hotbar slot switching every 20–30 seconds (optional)
       setInterval(() => {
         const slot = Math.floor(Math.random() * 9);
         bot.setQuickBarSlot(slot);
-      }, 20000);
-
-      // Swing arm every 10–15s
-      setInterval(() => {
-        bot.swingArm();
-      }, 10000 + Math.random() * 5000);
+      }, 20000 + Math.random() * 10000);
     });
 
-    // Auto login/register
+    // Auto Login/Register
     bot.on("message", (msg) => {
       const text = msg.toString().toLowerCase();
       if (text.includes("register")) {
+        console.log("🔐 Detected register prompt, sending /register");
         bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
       } else if (text.includes("login")) {
+        console.log("🔐 Detected login prompt, sending /login");
         bot.chat(`/login ${PASSWORD}`);
       }
     });
