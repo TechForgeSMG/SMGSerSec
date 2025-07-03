@@ -1,13 +1,13 @@
 name: Minecraft Bot
 
 on:
-  push:                        # Trigger on push
-  workflow_dispatch:          # Manual run
-  schedule:                   # Every 15 minutes
-    - cron: '*/15 * * * *'
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'  # Runs every 15 minutes
 
 concurrency:
-  group: minecraft-bot        # Prevent multiple overlapping runs
+  group: minecraft-bot
   cancel-in-progress: true
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm ci              # Use `npm ci` for CI environments
+        run: npm install
 
       - name: Run bot
-        run: node bot.js         # Runs your Mineflayer bot
+        run: node bot.js
