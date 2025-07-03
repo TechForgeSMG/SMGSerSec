@@ -1,4 +1,5 @@
 const mineflayer = require("mineflayer");
+const { pathfinder, Movements, goals } = require("mineflayer-pathfinder");
 
 const HOST = "play.smgin.me";
 const PORT = 58073;
@@ -7,8 +8,6 @@ const VERSION = "1.21.4";
 const PASSWORD = "Securitybysmg007";
 
 function startBot() {
-  console.log("⏳ Creating bot…");
-
   const bot = mineflayer.createBot({
     host: HOST,
     port: PORT,
@@ -16,78 +15,54 @@ function startBot() {
     version: VERSION,
   });
 
-  bot.on("error", (err) => {
-    console.error("❌ [error]", err);
-  });
+  bot.loadPlugin(pathfinder);
 
-  bot.on("kicked", (reason) => {
-    console.warn("⚠️ [kicked]", reason.toString());
-  });
-
+  bot.on("error", console.error);
+  bot.on("kicked", (reason) => console.warn("⚠️ [kicked]", reason.toString()));
   bot.on("end", () => {
-    console.log("🔁 [end] disconnected — retrying in 10s");
+    console.log("🔁 Disconnected. Reconnecting in 10s...");
     setTimeout(startBot, 10000);
   });
 
   bot.once("login", () => {
-    console.log("✅ [login] successful — in game world.");
+    console.log("✅ Logged in!");
 
     bot.on("spawn", () => {
-      console.log("✅ [spawn] bot is alive in the world");
+      console.log("✅ Spawned");
 
-      const movements = ['forward', 'back', 'left', 'right'];
-      let currentMove = null;
+      const defaultMove = new Movements(bot);
+      bot.pathfinder.setMovements(defaultMove);
 
-      // Change movement every 5-8 seconds
+      // Walk to random positions around spawn
       setInterval(() => {
-        if (currentMove) bot.setControlState(currentMove, false);
-        currentMove = movements[Math.floor(Math.random() * movements.length)];
-        bot.setControlState(currentMove, true);
-      }, 5000 + Math.random() * 3000);
+        const pos = bot.entity.position.offset(
+          (Math.random() - 0.5) * 10,
+          0,
+          (Math.random() - 0.5) * 10
+        );
+        bot.pathfinder.setGoal(new goals.GoalBlock(pos.x, pos.y, pos.z));
+      }, 15000); // Move every 15 seconds
 
-      // Look randomly every 3 seconds
+      // Look around randomly
       setInterval(() => {
         const yaw = Math.random() * Math.PI * 2;
         const pitch = (Math.random() - 0.5) * Math.PI;
         bot.look(yaw, pitch, true);
       }, 3000);
 
-      // Jump every 15–25 seconds
+      // Jump every so often
       setInterval(() => {
         bot.setControlState("jump", true);
-        setTimeout(() => bot.setControlState("jump", false), 500);
-      }, 15000 + Math.random() * 10000);
-
-      // Swing arm every 7–12 seconds
-      setInterval(() => {
-        bot.swingArm();
-      }, 7000 + Math.random() * 5000);
-
-      // Toggle sneak and sprint randomly
-      setInterval(() => {
-        bot.setControlState("sprint", true);
-        bot.setControlState("sneak", true);
-        setTimeout(() => {
-          bot.setControlState("sprint", false);
-          bot.setControlState("sneak", false);
-        }, 1000 + Math.random() * 2000);
-      }, 10000 + Math.random() * 10000);
-
-      // Hotbar slot switching every 20–30 seconds (optional)
-      setInterval(() => {
-        const slot = Math.floor(Math.random() * 9);
-        bot.setQuickBarSlot(slot);
-      }, 20000 + Math.random() * 10000);
+        setTimeout(() => bot.setControlState("jump", false), 400);
+      }, 20000);
     });
 
-    // Auto Login/Register
+    // Auto login/register
     bot.on("message", (msg) => {
       const text = msg.toString().toLowerCase();
       if (text.includes("register")) {
-        console.log("🔐 Detected register prompt, sending /register");
         bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
       } else if (text.includes("login")) {
-        console.log("🔐 Detected login prompt, sending /login");
         bot.chat(`/login ${PASSWORD}`);
       }
     });
